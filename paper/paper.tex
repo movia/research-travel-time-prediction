@@ -1,0 +1,100 @@
+\NeedsTeXFormat{LaTeX2e}
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+
+\usepackage{booktabs}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epsfig}
+
+\usepackage{marvosym}
+
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multicol}
+\usepackage{etoolbox}
+
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6in}
+\setlength{\oddsidemargin}{.25in}
+\setlength{\topmargin}{-.5in} 
+
+\patchcmd{\thebibliography}{\section*{\refname}}
+    {\begin{multicols}{2}[\section*{\refname}\singlespace\footnotesize]}{}{}
+\patchcmd{\endthebibliography}{\endlist}{\endlist\end{multicols}}{}{}
+
+\hyphenation{itself}
+
+\title{Results - Draft}
+\author{Niklas Christoffer Petersen\\Trafikselskabet Movia} % \\ Possible thesis advisor:  I.\ M.\ Firstreader}
+
+\begin{document}
+
+
+\singlespace
+\maketitle
+
+\begin{abstract}                % ~350 words max
+\end{abstract}
+
+\onehalfspacing
+
+% This sets section-numbering to only include Section and Subsection numbers
+\setcounter{secnumdepth}{2}
+
+\section{Background}\label{ch:background}
+
+\section{Data}\label{ch:data}
+\begin{table}[h!]
+    \center
+    \footnotesize
+    \include{data}
+\end{table}
+
+\begin{figure}[h!]
+    \center
+    \includegraphics[scale=.8]{../plots/d1_loi_boxplot_nooutlier}
+    \caption{}    
+\end{figure}
+\clearpage
+
+\subsection{Outliers}
+Slowest 5\% pr each link. Number of links in set for each journey.
+
+\begin{figure}[h!]
+    \center
+    \includegraphics[scale=.8]{../plots/d1_loi_b5p_by_journeyref}
+    \caption{}    
+\end{figure}
+
+
+\begin{figure}[h!]
+    \center
+    \includegraphics[scale=.8]{../plots/d1_loi_b5p_hour_histogram}
+    \caption{}    
+\end{figure}
+
+\clearpage
+
+\section{Results}\label{ch:results}
+\begin{table}[h!]
+    \center
+    \footnotesize
+    \begin{tabular}{c|ccc}
+        Algorithm & MAPE (\%) & MAE (s) & RMSE (s) \\ \hline \hline
+        $\text{LR}$ & 20.9\% & 15.9 & 23.9 \\ \hline
+        $\text{DT}_{50}$ & 20.6\% & 15.6 & 23.3 \\ \hline
+        $\text{RF}_{10 \times 50}$ & 20.4\% & 15.5 & 23.2 \\ \hline
+        $\text{SVM}$ & 20.4\% & 15.7 & 23.4 \\ \hline
+        $\text{GP}$ & ? & ? & ? \\ \hline
+    \end{tabular}
+\end{table}
+
+\begin{spacing}{1}
+  \bibliographystyle{ieeetr}
+  \bibliography{../references/library}
+\end{spacing}
+
+\end{document}

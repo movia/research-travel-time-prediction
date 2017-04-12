@@ -87,6 +87,8 @@ ENV/
 # Rope project settings
 .ropeproject
 
+.vs/
+
 # =========================
 # Operating System Files
 # =========================
@@ -137,3 +139,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
