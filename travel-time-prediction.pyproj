@@ -5,29 +5,35 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9976e671-d42c-47cc-954c-af9b64cd766b}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>plots.py</StartupFile>
-    <SearchPath />
+    <StartupFile>svr_multiple.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId />
-    <InterpreterVersion />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
   <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
   <PropertyGroup>
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
-    <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="linear.py" />
+    <Compile Include="nn_multiple.py" />
+    <Compile Include="nn_test.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="plots.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="pp.py" />
-    <Compile Include="svm.py" />
+    <Compile Include="common.py" />
+    <Compile Include="random_forest.py" />
+    <Compile Include="decision_tree.py" />
+    <Compile Include="gaussian_process.py" />
+    <Compile Include="svr_single.py" />
+    <Compile Include="svr_multiple.py" />
     <Compile Include="svm_gridsearch.py" />
   </ItemGroup>
-  <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
