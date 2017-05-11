@@ -3,13 +3,13 @@ import pandas as pd
 import sklearn.preprocessing as pp
 from common import *
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, Activation
+from keras.layers import Dropout, Dense, Activation
 
 model = Sequential()
-model.add(Dense(250, input_dim = 14))
+model.add(Dense(500, input_dim = 14))
 model.add(Activation('relu'))
 model.add(Dropout(0.25))
-model.add(Dense(100))
+model.add(Dense(250))
 model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('linear'))
@@ -38,13 +38,11 @@ for group, X, Y, meta in data:
     # Normalizing X and y:
     X_scaler = pp.RobustScaler(with_centering = False, quantile_range = (5, 95)).fit(X_train)
     Y_scaler = pp.RobustScaler(with_centering = False, quantile_range = (5, 95)).fit(Y_train)
-    #X_scaler = pp.MinMaxScaler(feature_range=(0, 1)).fit(X_train)
-    #Y_scaler = pp.MinMaxScaler(feature_range=(0, 1)).fit(Y_train)
 
     X_train_norm = X_scaler.transform(X_train)
     Y_train_norm = Y_scaler.transform(Y_train)
 
-    model.fit(X_train_norm, Y_train_norm, epochs=25, batch_size=64, verbose=2)
+    model.fit(X_train_norm, Y_train_norm, epochs=100, batch_size=64, verbose=2)
 
     print('Test data set (size, features):',  X_test.shape)
 

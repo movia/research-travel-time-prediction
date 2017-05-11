@@ -39,15 +39,15 @@ def load_csv(file, group_columns = [], categorial_columns = [], meta_columns = [
         data = data[(data['HeadwayTime_L' + str(i)] > 0) & (data['LinkTravelTime_L' + str(i)] > 0)]
 
     # Calculate m lag headway and travel time for journey, upstream links
-    #j = 3
-    #grouping = data.groupby(['JourneyRef'])
-    #for i in range(1, j + 1):
-    #    data['LinkTravelTime_J' + str(i)] = grouping['LinkTravelTime'].shift(i)
-    #    numerical_columns += ['LinkTravelTime_J' + str(i)]
-    #
-    ## Slice out missing values
-    #for i in range(1, j + 1):
-    #    data = data[(data['LinkTravelTime_J' + str(i)] > 0)]
+    j = 3
+    grouping = data.groupby(['JourneyRef'])
+    for i in range(1, j + 1):
+        data['LinkTravelTime_J' + str(i)] = grouping['LinkTravelTime'].shift(i)
+        numerical_columns += ['LinkTravelTime_J' + str(i)]
+    
+    # Slice out missing values
+    for i in range(1, j + 1):
+        data = data[(data['LinkTravelTime_J' + str(i)] > 0)]
 
     data = data[(26 <= data.LineDirectionLinkOrder) & (data.LineDirectionLinkOrder <= 32)]
 

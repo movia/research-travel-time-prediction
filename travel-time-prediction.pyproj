@@ -21,7 +21,7 @@
   <ItemGroup>
     <Compile Include="linear.py" />
     <Compile Include="nn_multiple.py" />
-    <Compile Include="nn_test.py">
+    <Compile Include="nn_single.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="plots.py">
