@@ -71,7 +71,7 @@ def load_csv(file, group_columns = [], categorial_columns = [], meta_columns = [
         X = with_dummies.as_matrix()
         Y = group.as_matrix(columns = [output_column])
         
-        yield (key, X, Y, group[meta_columns])
+        yield (key, X, Y, group[(meta_columns + input_columns + [output_column])])
 
 def root_mean_square_error(y_true, y_pred): 
     return np.sqrt(np.mean(np.power(y_true - y_pred, 2)))
@@ -82,7 +82,7 @@ def mean_absolute_error(y_true, y_pred):
 def mean_absolute_percentage_error(y_true, y_pred): 
     return np.mean(np.abs((y_true - y_pred) / y_true))
 
-def write_results_table(data, outfile, group_columns, key_index = 0, true_colomn_name = 'Target', predicted_column_name = 'Predicted'):
+def write_results_table(data, outfile, group_columns, key_index = 0, true_colomn_name = 'Observed', predicted_column_name = 'Predicted'):
     with open(outfile, 'w', encoding='utf-8') as file:
         # Write header
         file.write("\\begin{tabular}{l|rrr}\n")

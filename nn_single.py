@@ -22,12 +22,12 @@ model.compile(loss='mean_squared_error',
 # Configuration
 group_columns = []
 categorial_columns = ['LinkRef', 'DayType', 'TimeOfDayClass']
-meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'DayType', 'LineDirectionLinkOrder', 'LinkName']
+meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'LineDirectionLinkOrder', 'LinkName']
 
 results = pd.DataFrame()
 
-g = load_csv('data/4A_201701_Consistent.csv', group_columns = group_columns, categorial_columns = categorial_columns, meta_columns = meta_columns)
-group, X, Y, meta = next(g)
+data = load_csv('data/4A_201701_Consistent.csv', group_columns = group_columns, categorial_columns = categorial_columns, meta_columns = meta_columns)
+_, X, Y, meta = next(data)
 
 # Split data into train and test    
 X_train, X_test = np.split(X, [int(.8*len(X))])
@@ -45,7 +45,7 @@ Y_train_norm = Y_scaler.transform(Y_train)
 
 #X_train_norm_3d = np.reshape(X_train_norm, (X_train_norm.shape[0], 1, X_train_norm.shape[1]))
 
-model.fit(X_train_norm, Y_train_norm, epochs=25, batch_size=64, verbose=2)
+model.fit(X_train_norm, Y_train_norm, epochs=150, batch_size=10, verbose=2)
 
 print('Test data set (size, features):',  X_test.shape)
 
@@ -57,11 +57,10 @@ Y_test_norm = Y_scaler.transform(Y_test)
 Y_test_pred_norm = model.predict(X_test_norm)
 Y_test_pred = Y_scaler.inverse_transform(Y_test_pred_norm)
 
-meta_test['Observed'] = Y_test
-meta_test['Predicted'] = Y_test_pred
+meta_test['LinkTravelTime_Predicted'] = Y_test_pred
 results = results.append(meta_test, ignore_index = True)
 
 # Write predictions to CSV
 results.to_csv('data/results_nn_single.csv', index = False, encoding = 'utf-8')
 # Write predictions to TEX
-write_results_table(results, 'paper/results_nn_single.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'Observed', predicted_column_name = 'Predicted')
+write_results_table(results, 'paper/results_nn_single.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'LinkTravelTime', predicted_column_name = 'LinkTravelTime_Predicted')

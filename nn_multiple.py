@@ -18,15 +18,19 @@ model.compile(loss='mean_squared_error',
               optimizer='adam',
               metrics=['accuracy'])
 
+model_json = model.to_json()
+with open("models/model_nn_multiple.json", "w") as json_file:
+    json_file.write(model_json)
+
 # Configuration
 group_columns = ['LinkRef']
 categorial_columns = ['DayType', 'TimeOfDayClass']
-meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'DayType', 'LineDirectionLinkOrder', 'LinkName']
+meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'LineDirectionLinkOrder', 'LinkName']
 
 results = pd.DataFrame()
 
 data = load_csv('data/4A_201701_Consistent.csv', group_columns = group_columns, categorial_columns = categorial_columns, meta_columns = meta_columns)
-#group, X, Y, meta = next(g)
+#group, X, Y, meta = next(data)
 for group, X, Y, meta in data:
     # Split data into train and test    
     X_train, X_test = np.split(X, [int(.8*len(X))])
@@ -42,7 +46,7 @@ for group, X, Y, meta in data:
     X_train_norm = X_scaler.transform(X_train)
     Y_train_norm = Y_scaler.transform(Y_train)
 
-    model.fit(X_train_norm, Y_train_norm, epochs=100, batch_size=64, verbose=2)
+    model.fit(X_train_norm, Y_train_norm, epochs=100, batch_size=32, verbose=2)
 
     print('Test data set (size, features):',  X_test.shape)
 
@@ -52,11 +56,13 @@ for group, X, Y, meta in data:
     Y_test_pred_norm = model.predict(X_test_norm)
     Y_test_pred = Y_scaler.inverse_transform(Y_test_pred_norm)
 
-    meta_test['Observed'] = Y_test
-    meta_test['Predicted'] = Y_test_pred
+    meta_test['LinkTravelTime_Predicted'] = Y_test_pred
     results = results.append(meta_test, ignore_index = True)
+
+    # serialize weights to HDF5
+    model.save_weights("models/model_nn_" + safe_filename(group) + ".h5")
 
 # Write predictions to CSV
 results.to_csv('data/results_nn_multiple.csv', index = False, encoding = 'utf-8')
 # Write predictions to TEX
-write_results_table(results, 'paper/results_nn_multiple.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'Observed', predicted_column_name = 'Predicted')
+write_results_table(results, 'paper/results_nn_multiple.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'LinkTravelTime', predicted_column_name = 'LinkTravelTime_Predicted')
