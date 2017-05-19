@@ -16,6 +16,10 @@
 \usepackage{multicol}
 \usepackage{etoolbox}
 
+\usepackage{tikz}
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+
 \setlength{\textheight}{9in}
 \setlength{\textwidth}{6in}
 \setlength{\oddsidemargin}{.25in}
@@ -79,18 +83,100 @@ Slowest 5\% pr each link. Number of links in set for each journey.
 \clearpage
 
 \section{Results}\label{ch:results}
-\begin{table}[h!]
+
+\subsection{General models}
+
+\subsubsection{LR general models}
+
+\begin{table}[!ht]
     \center
     \footnotesize
-    \begin{tabular}{c|ccc}
-        Algorithm & MAPE (\%) & MAE (s) & RMSE (s) \\ \hline \hline
-        $\text{LR}$ & 20.9\% & 15.9 & 23.9 \\ \hline
-        $\text{DT}_{50}$ & 20.6\% & 15.6 & 23.3 \\ \hline
-        $\text{RF}_{10 \times 50}$ & 20.4\% & 15.5 & 23.2 \\ \hline
-        $\text{SVM}$ & 20.4\% & 15.7 & 23.4 \\ \hline
-        $\text{GP}$ & ? & ? & ? \\ \hline
-    \end{tabular}
+    \include{results_lr_single}
+    \caption{Results using a single LR model.}
 \end{table}
+
+\subsubsection{SVR general models}
+
+\begin{table}[!ht]
+    \center
+    \footnotesize
+    \include{results_svr_single}
+    \caption{Results using a single SVR model.}
+\end{table}
+
+\subsubsection{NN general models}
+
+\begin{table}[!ht]
+    \center
+    \footnotesize
+    \include{results_nn_single}
+    \caption{Results using a single NN model.}
+\end{table}
+
+
+
+\subsection{Link models}
+
+\subsubsection{LN link models}
+
+\begin{table}[!ht]
+    \center
+    \footnotesize
+    \include{results_lr_multiple}
+    \caption{Results using multiple LR link models.}
+\end{table}
+
+\subsubsection{SVR link models}
+
+\begin{table}[!ht]
+    \center
+    \footnotesize
+    \include{results_svr_multiple}
+    \caption{Results using multiple SVR link models.}
+\end{table}
+
+\subsubsection{NN link models}
+
+\begin{table}[!ht]
+    \center
+    \footnotesize
+    \include{results_nn_multiple}
+    \caption{Results using a multiple NN model.}
+\end{table}
+
+\clearpage
+
+\subsection{Single vs. multiple plots (SVR/NN)}
+
+\begin{figure}[!ht]
+    \center
+    \includegraphics[width=\textwidth]{../plots/results_svr_errors.pdf}
+    \caption{}    
+\end{figure}
+
+\begin{figure}[!ht]
+    \center
+    \includegraphics[width=\textwidth]{../plots/results_dnn_errors.pdf}
+    \caption{}    
+\end{figure}
+\clearpage
+
+\section{More inputs}
+\begin{itemize}
+    \item Peek non peek \checkmark
+    \item no of Traffic ligths
+    \item parking?
+    \item roadworks
+    \item weather
+    \item proximity to station, stadion etc.
+\end{itemize}
+
+Future work:
+- Distribution of error terms in single model vs. specialized models.
+- Comapare models 
+- Demand based models
+- 
+
 
 \begin{spacing}{1}
   \bibliographystyle{ieeetr}
