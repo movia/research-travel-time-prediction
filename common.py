@@ -38,7 +38,7 @@ def load_csv(file, group_columns = [], categorial_columns = [], meta_columns = [
     for i in range(1, m + 1):
         data = data[(data['HeadwayTime_L' + str(i)] > 0) & (data['LinkTravelTime_L' + str(i)] > 0)]
 
-    # Calculate m lag headway and travel time for journey, upstream links
+    # Calculate j lag headway and travel time for journey, upstream links
     j = 3
     grouping = data.groupby(['JourneyRef'])
     for i in range(1, j + 1):
@@ -62,10 +62,6 @@ def load_csv(file, group_columns = [], categorial_columns = [], meta_columns = [
 
     for key, group in grouping:
         with_dummies = pd.get_dummies(group[input_columns], columns = categorial_columns)
-        
-        #data_with_dummies = with_dummies.copy()
-        #data_with_dummies[output_column] = group[output_column]
-        #data_with_dummies.to_csv('data/pp_' + safe_filename(key[0]) + '.csv', sep = ';', index = False)
         
         # Create dummy variables
         X = with_dummies.as_matrix()

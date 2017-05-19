@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9976e671-d42c-47cc-954c-af9b64cd766b}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>svr_multiple.py</StartupFile>
+    <StartupFile>lr_multiple.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -19,7 +19,8 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="linear.py" />
+    <Compile Include="lr_single.py" />
+    <Compile Include="lr_multiple.py" />
     <Compile Include="nn_multiple.py" />
     <Compile Include="nn_single.py">
       <SubType>Code</SubType>
@@ -34,6 +35,9 @@
     <Compile Include="svr_single.py" />
     <Compile Include="svr_multiple.py" />
     <Compile Include="svm_gridsearch.py" />
+    <Compile Include="tf_multiple.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>

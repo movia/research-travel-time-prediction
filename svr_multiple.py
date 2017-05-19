@@ -7,7 +7,7 @@ from common import load_csv, write_results_table
 # Configuration
 group_columns = ['LinkRef']
 categorial_columns = ['DayType', 'TimeOfDayClass']
-meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'DayType', 'LineDirectionLinkOrder', 'LinkName']
+meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'LineDirectionLinkOrder', 'LinkName']
 
 results = pd.DataFrame()
 
@@ -44,11 +44,10 @@ for group, X, Y, meta in load_csv('data/4A_201701_Consistent.csv', group_columns
     Y_test_pred_norm = clf.predict(X_test_norm)
     Y_test_pred = Y_scaler.inverse_transform(Y_test_pred_norm.reshape(-1, 1))
 
-    meta_test['Observed'] = Y_test
-    meta_test['Predicted'] = Y_test_pred
+    meta_test['LinkTravelTime_Predicted'] = Y_test_pred
     results = results.append(meta_test, ignore_index = True)
 
 # Write predictions to CSV
 results.to_csv('data/results_svr_multiple.csv', index = False, encoding = 'utf-8')
 # Write predictions to TEX
-write_results_table(results, 'paper/results_svr_multiple.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'Observed', predicted_column_name = 'Predicted')
+write_results_table(results, 'paper/results_svr_multiple.tex', group_columns = ['LineDirectionLinkOrder', 'LinkName'], key_index = 1, true_colomn_name = 'LinkTravelTime', predicted_column_name = 'LinkTravelTime_Predicted')
