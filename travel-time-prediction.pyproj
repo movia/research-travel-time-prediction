@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9976e671-d42c-47cc-954c-af9b64cd766b}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>lr_multiple.py</StartupFile>
+    <StartupFile>tf_multiple.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
