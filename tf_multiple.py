@@ -11,7 +11,7 @@ import sklearn.preprocessing as pp
 
 import functools
 
-import common
+from common import *
 
 # initialize and configure logging
 logger = logging.getLogger('tf_multiple')
@@ -52,7 +52,7 @@ class Config_LSTM_1:
 
         self.batch_size = 64
         self.seq_len = 20
-        self.learning_rate = 0.001
+        self.learning_rate = 0.0003
         self.state_size = 128
         self.num_layers = 2
         self.num_epochs = 15
@@ -157,11 +157,17 @@ class LSTM_Model_1:
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
-        return sess.run(self.model, feed_dict={
+        b = np.zeros(X.shape[:2])
+
+        preds = sess.run(self.model, feed_dict={
                 self.input_placeholder: X[:, 0, :].reshape(-1, self.config.seq_len, 1),
                 #self.target_placeholder: y[:, 0],
                 self.dropout_placeholder: self.config.dropout_eval
         })
+
+        return b + preds
+
+
         
 
 
@@ -218,9 +224,9 @@ def main():
     preds_norm = model_1.predict(X_test_norm)
     preds = scaler.inverse_transform(preds_norm)
 
-    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test[:, 0], preds))
+    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test[:, 0], preds[:, 0]))
 
-    
 
 
 if __name__ == "__main__": main()
+
