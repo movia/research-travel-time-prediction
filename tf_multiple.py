@@ -29,10 +29,11 @@ class Config_LSTM_1:
     def __init__(self):
 
         self.batch_size = 100
-        self.seq_len = 5
+        self.seq_len = 20
         self.learning_rate = 0.001
         self.state_size = 120
         self.num_layers = 2
+        self.num_epochs = 50
         self.dropout_train = 0.25
         self.dropout_eval = 1
 
@@ -48,6 +49,7 @@ class LSTM_Model_1:
         last_output = last_output[:, last_output.shape[1] - 1, :]
         last_output = self.add_dense_layer(last_output, self.config.state_size, 1)
         self.model = last_output
+        self.optimize
 
     def add_placeholders(self):
 
@@ -91,7 +93,6 @@ class LSTM_Model_1:
         optimizer = tf.train.RMSPropOptimizer(self.config.learning_rate)
         return optimizer.minimize(self.cost)
 
-
     def batch_train_generator(self, X, location):
         """Consecutive mini
         batch generator
@@ -112,15 +113,27 @@ class LSTM_Model_1:
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
-        # mini batch generator for training
-        gen_train = self.batch_train_generator(X_train, 0)
+        for epoch in range(self.config.num_epochs):
+            # mini batch generator for training
+            gen_train = self.batch_train_generator(X_train, 0)
 
-        for batch_X_train, batch_y_train in gen_train:
-            _ = sess.run(self.optimize, feed_dict={
-                    self.input_placeholder: batch_X_train,
-                    self.target_placeholder: batch_y_train,
-                    self.dropout_placeholder: self.config.dropout_train
+            for i in range(len(X_train) // self.config.batch_size):
+                #TRACE print("Optimizing batch {0}".format(i));
+                batch_X_train, batch_y_train = next(gen_train);
+                _ = sess.run(self.optimize, feed_dict={
+                        self.input_placeholder: batch_X_train,
+                        self.target_placeholder: batch_y_train,
+                        self.dropout_placeholder: self.config.dropout_train
+                })
+
+            error = sess.run(self.cost, feed_dict={
+                    self.input_placeholder: X_train[:, 0, :self.config.seq_len].reshape(-1, self.config.seq_len, 1),
+                    self.target_placeholder: X_train[:, 0, -1].reshape(-1, 1, 1),
+                    self.dropout_placeholder: self.config.dropout_eval
             })
+
+            print("Epoch: %d, train error: %f" % (epoch, error))
+
 
 
 
@@ -142,8 +155,8 @@ travel_time_ts = data.pivot(index='JourneyRef', columns='LinkRef', values='LinkT
 travel_time_ts = travel_time_ts[~np.isnan(travel_time_ts).any(axis=1)]
 
 # Create lags travel time
-lags = np.stack([travel_time_ts.shift(i) for i in range(5, -1, -1)], axis = -1)
-lags = lags[5:, ...]
+lags = np.stack([travel_time_ts.shift(i) for i in range(20, -1, -1)], axis = -1)
+lags = lags[20:, ...]
 
 print("Initializing model graph ...")
 tf.reset_default_graph()
