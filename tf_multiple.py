@@ -1,12 +1,32 @@
-import tensorflow as tf
-import tensorflow.contrib.rnn as rnn
-import functools
+import logging
+import datetime
+
 import numpy as np
 import pandas as pd
 
-import datetime
+import tensorflow as tf
+import tensorflow.contrib.rnn as rnn
 
-print("Using TensorFlow " + tf.VERSION)
+import sklearn.preprocessing as pp
+
+import functools
+
+# initialize and configure logging
+logger = logging.getLogger('tf_multiple')
+logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler('tf_multiple.log')
+fh.setLevel(logging.DEBUG)
+# create console handler with a higher log level
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(fh)
+logger.addHandler(ch)
 
 # prevent tensorflow from allocating the entire GPU memory at once
 #config = tf.ConfigProto()
@@ -33,7 +53,7 @@ class Config_LSTM_1:
         self.learning_rate = 0.001
         self.state_size = 128
         self.num_layers = 2
-        self.num_epochs = 50
+        self.num_epochs = 15
         self.dropout_train = 0.25
         self.dropout_eval = 1
 
@@ -93,74 +113,109 @@ class LSTM_Model_1:
         optimizer = tf.train.RMSPropOptimizer(self.config.learning_rate)
         return optimizer.minimize(self.cost)
 
-    def batch_train_generator(self, X, location):
+    def batch_train_generator(self, X, y, location):
         """Consecutive mini
         batch generator
         """
         for i in range(len(X) // self.config.batch_size):
-            batch_X = X[i:i+self.config.batch_size, location, :self.config.seq_len].reshape(self.config.batch_size, self.config.seq_len, 1)
-            batch_y = X[i:i+self.config.batch_size, location, -1].reshape(self.config.batch_size, 1, 1)
+            batch_X = X[i:i+self.config.batch_size, location, :].reshape(self.config.batch_size, self.config.seq_len, 1)
+            batch_y = y[i:i+self.config.batch_size, location].reshape(self.config.batch_size, 1, 1)
             yield batch_X, batch_y
 
-    def run_epochs(self, X):
-        # TODO: Refactor 
-        i = int(len(X) * 0.8)
-        n_test = len(X) - i
+    def train(self, X, y):
 
-        X_train = X[:i]
-        X_test = X[i:i + n_test]
-        
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
         for epoch in range(self.config.num_epochs):
             # mini batch generator for training
-            gen_train = self.batch_train_generator(X_train, 0)
+            gen_train = self.batch_train_generator(X, y, 0)
 
-            for i in range(len(X_train) // self.config.batch_size):
-                #TRACE print("Optimizing batch {0}".format(i));
-                batch_X_train, batch_y_train = next(gen_train);
+            for batch in range(len(X) // self.config.batch_size):
+                logger.debug("Optimizing (epoch, batch) = ({0}, {1})".format(epoch, batch));
+                batch_X, batch_y = next(gen_train);
                 _ = sess.run(self.optimize, feed_dict={
-                        self.input_placeholder: batch_X_train,
-                        self.target_placeholder: batch_y_train,
+                        self.input_placeholder: batch_X,
+                        self.target_placeholder: batch_y,
                         self.dropout_placeholder: self.config.dropout_train
                 })
 
-            error = sess.run(self.cost, feed_dict={
-                    self.input_placeholder: X_train[:, 0, :self.config.seq_len].reshape(-1, self.config.seq_len, 1),
-                    self.target_placeholder: X_train[:, 0, -1].reshape(-1, 1, 1),
+            train_error = sess.run(self.cost, feed_dict={
+                    self.input_placeholder: X[:, 0, :],
+                    self.target_placeholder: y[:, 0],
                     self.dropout_placeholder: self.config.dropout_eval
             })
 
-            print("Epoch: %d, train error: %f" % (epoch, error))
+            logger.info("Epoch: %d, train error: %f", epoch, train_error)
+           
+
+
+    def predict(self, X):
+
+        sess = tf.Session()
+        sess.run(tf.global_variables_initializer())
+
+        return sess.run(self.model, feed_dict={
+                self.input_placeholder: X[:, 0, :],
+                #self.target_placeholder: y[:, 0],
+                self.dropout_placeholder: self.config.dropout_eval
+        })
+        
 
 
 
+def main():    
+    logger.info("Using TensorFlow " + tf.VERSION)
+
+    logger.info("Loading data ...")
+    data = pd.read_csv('data/4A_201701_Consistent.csv', sep=';')
+    # Initial data-slicing
+    data = data[(data.LinkTravelTime > 0) & (data.LineDirectionCode == 1)]
+    data = data[(26 <= data.LineDirectionLinkOrder) & (data.LineDirectionLinkOrder <= 32)]
+    data['DateTime'] = pd.to_datetime(data['DateTime'])
+    data.set_index(pd.DatetimeIndex(data['DateTime']), inplace = True)
+
+    logger.info("Transforming data ...")
+    # Create and 2d matrix of traveltime with (x, y) = (space, time) = (linkRef, journeyRef)
+    ts = data.pivot(index='JourneyRef', columns='LinkRef', values='LinkTravelTime')
+    ts = ts[~np.isnan(ts).any(axis=1)]
+    
+    # TODO: Refactor 
+    i = int(len(ts) * 0.8)
+    n_test = len(ts) - i
+
+    train = ts[0:i]
+    test = ts[i:i + n_test]
+       
+    scaler = pp.RobustScaler(with_centering = True, quantile_range = (5, 95))
+    train_norm = scaler.fit_transform(train)
+    test_norm = scaler.transform(test)
+
+    # Create lags travel time
+    X_train_norm = np.stack([np.roll(train_norm, i) for i in range(20, 0, -1)], axis = -1)
+    X_train_norm = X_train_norm[20:, ...]
+    y_train_norm = train_norm[20:, ...]
+
+    # Create lags travel time
+    X_test_norm = np.stack([np.roll(test_norm, i) for i in range(20, 0, -1)], axis = -1)
+    X_test_norm = X_test_norm[20:, ...]
+    y_test_norm = test_norm[20:, ...]
+
+    logger.info("Train size (X, y) = (" + str(X_train_norm.shape) + ", " + str(y_train_norm.shape) + ")")
+    logger.info("Test size (X, y) = (" + str(X_test_norm.shape) + ", " + str(y_test_norm.shape) + ")")
+
+    logger.info("Initializing model graph ...")
+    tf.reset_default_graph()
+    config_lstm_1 = Config_LSTM_1()
+    model_1 = LSTM_Model_1(config_lstm_1)
+
+    logger.info("Running training epochs ...")
+    model_1.train(X_train_norm, y_train_norm)
+
+    logger.info("Running test evaluation ...")
+    preds_norm = model_1.predict(X_test_norm)
+    preds = scaler.inverse_transform(preds)
+    
 
 
-######################################################
-
-
-print("Loading data ...")
-data = pd.read_csv('data/4A_201701_Consistent.csv', sep=';')
-# Initial data-slicing
-data = data[(data.LinkTravelTime > 0) & (data.LineDirectionCode == 1)]
-data = data[(26 <= data.LineDirectionLinkOrder) & (data.LineDirectionLinkOrder <= 32)]
-data['DateTime'] = pd.to_datetime(data['DateTime'])
-data.set_index(pd.DatetimeIndex(data['DateTime']), inplace = True)
-
-print("Transforming data ...")
-travel_time_ts = data.pivot(index='JourneyRef', columns='LinkRef', values='LinkTravelTime')
-travel_time_ts = travel_time_ts[~np.isnan(travel_time_ts).any(axis=1)]
-
-# Create lags travel time
-lags = np.stack([travel_time_ts.shift(i) for i in range(20, -1, -1)], axis = -1)
-lags = lags[20:, ...]
-
-print("Initializing model graph ...")
-tf.reset_default_graph()
-config_lstm_1 = Config_LSTM_1()
-model_1 = LSTM_Model_1(config_lstm_1)
-
-print("Running ...")
-model_1.run_epochs(lags)
+if __name__ == "__main__": main()
