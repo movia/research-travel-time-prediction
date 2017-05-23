@@ -28,10 +28,10 @@ class Config_LSTM_1:
 
     def __init__(self):
 
-        self.batch_size = 100
+        self.batch_size = 64
         self.seq_len = 20
         self.learning_rate = 0.001
-        self.state_size = 120
+        self.state_size = 128
         self.num_layers = 2
         self.num_epochs = 50
         self.dropout_train = 0.25
@@ -149,7 +149,6 @@ data = data[(26 <= data.LineDirectionLinkOrder) & (data.LineDirectionLinkOrder <
 data['DateTime'] = pd.to_datetime(data['DateTime'])
 data.set_index(pd.DatetimeIndex(data['DateTime']), inplace = True)
 
-
 print("Transforming data ...")
 travel_time_ts = data.pivot(index='JourneyRef', columns='LinkRef', values='LinkTravelTime')
 travel_time_ts = travel_time_ts[~np.isnan(travel_time_ts).any(axis=1)]
@@ -165,5 +164,3 @@ model_1 = LSTM_Model_1(config_lstm_1)
 
 print("Running ...")
 model_1.run_epochs(lags)
-
-
