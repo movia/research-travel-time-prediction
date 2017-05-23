@@ -46,10 +46,11 @@ def lazy_property(function):
         return getattr(self, attribute)
     return wrapper
 
-class Config_LSTM_1:
+class LstmConfig:
 
-    def __init__(self):
+    def __init__(self, name):
 
+        self.name = name
         self.batch_size = 64
         self.seq_len = 20
         self.learning_rate = 0.0003
@@ -59,23 +60,16 @@ class Config_LSTM_1:
         self.dropout_train = 0.25
         self.dropout_eval = 1
 
-class LSTM_Model_1:
+class LstmModel:
 
     def __init__(self, config):
 
         self.config = config
         self.add_placeholders()
-        #self.get_input_placeholder
-        #self.get_dropout_placeholder
-        last_output = self.add_LSTM_layer()
-        last_output = last_output[:, last_output.shape[1] - 1, :]
-        last_output = self.add_dense_layer(last_output, self.config.state_size, 1)
-        self.model = last_output
-        self.optimize
 
     def add_placeholders(self):
 
-        with tf.variable_scope("lstm_placeholders_model_1"):
+        with tf.variable_scope(self.config.name + "_placeholders"):
 
             self.input_placeholder = tf.placeholder(tf.float32, [None, self.config.seq_len, 1], "input")
             self.dropout_placeholder = tf.placeholder(tf.float32, None, "dropout")
@@ -83,7 +77,7 @@ class LSTM_Model_1:
 
     def add_LSTM_layer(self):
 
-        with tf.variable_scope("lstm_layer_model_1"):
+        with tf.variable_scope(self.config.name + "_lstm_layers"):
 
             # The following is replaced by the generator pattern cf. https://github.com/tensorflow/tensorflow/issues/8191            
             #onecell = rnn.GRUCell(self.config.state_size)
@@ -115,26 +109,32 @@ class LSTM_Model_1:
         optimizer = tf.train.RMSPropOptimizer(self.config.learning_rate)
         return optimizer.minimize(self.cost)
 
-    def batch_train_generator(self, X, y, location):
+    def batch_train_generator(self, X, y):
         """Consecutive mini
         batch generator
         """
         for i in range(len(X) // self.config.batch_size):
-            batch_X = X[i:i+self.config.batch_size, location, :].reshape(-1, self.config.seq_len, 1)
-            batch_y = y[i:i+self.config.batch_size, location].reshape(-1, 1, 1)
+            batch_X = X[i:i+self.config.batch_size, :].reshape(-1, self.config.seq_len, 1)
+            batch_y = y[i:i+self.config.batch_size].reshape(-1, 1, 1)
             yield batch_X, batch_y
 
     def train(self, X, y):
 
+        last_output = self.add_LSTM_layer()
+        last_output = last_output[:, last_output.shape[1] - 1, :]
+        last_output = self.add_dense_layer(last_output, self.config.state_size, 1)
+        self.model = last_output
+        self.optimize
+        
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
         for epoch in range(self.config.num_epochs):
             # mini batch generator for training
-            gen_train = self.batch_train_generator(X, y, 0)
+            gen_train = self.batch_train_generator(X, y)
 
             for batch in range(len(X) // self.config.batch_size):
-                logger.debug("Optimizing (epoch, batch) = ({0}, {1})".format(epoch, batch));
+                #logger.debug("Optimizing (epoch, batch) = ({0}, {1})".format(epoch, batch));
                 batch_X, batch_y = next(gen_train);
                 _ = sess.run(self.optimize, feed_dict={
                         self.input_placeholder: batch_X,
@@ -143,29 +143,28 @@ class LSTM_Model_1:
                 })
 
             train_error = sess.run(self.cost, feed_dict={
-                    self.input_placeholder: X[:, 0, :].reshape(-1, self.config.seq_len, 1),
-                    self.target_placeholder: y[:, 0].reshape(-1, 1, 1),
+                    self.input_placeholder: X.reshape(-1, self.config.seq_len, 1),
+                    self.target_placeholder: y.reshape(-1, 1, 1),
                     self.dropout_placeholder: self.config.dropout_eval
             })
 
-            logger.info("Epoch: %d, train error: %f", epoch, train_error)
-           
-
+            logger.info(self.config.name + ": epoch: %d, train error: %f", epoch, train_error)
 
     def predict(self, X):
 
+        if self.model is None:
+            raise RuntimeError("Model is not initialized.")
+
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
-
-        b = np.zeros(X.shape[:2])
-
+        
         preds = sess.run(self.model, feed_dict={
-                self.input_placeholder: X[:, 0, :].reshape(-1, self.config.seq_len, 1),
+                self.input_placeholder: X.reshape(-1, self.config.seq_len, 1),
                 #self.target_placeholder: y[:, 0],
                 self.dropout_placeholder: self.config.dropout_eval
         })
 
-        return b + preds
+        return preds
 
 
         
@@ -208,25 +207,28 @@ def main():
     X_test_norm = np.stack([np.roll(test_norm, i) for i in range(20, 0, -1)], axis = -1)
     X_test_norm = X_test_norm[20:, ...]
     y_test_norm = test_norm[20:, ...]
+    y_test = test.iloc[20:, :]
 
     logger.info("Train size (X, y) = (" + str(X_train_norm.shape) + ", " + str(y_train_norm.shape) + ")")
     logger.info("Test size (X, y) = (" + str(X_test_norm.shape) + ", " + str(y_test_norm.shape) + ")")
 
     logger.info("Initializing model graph ...")
     tf.reset_default_graph()
-    config_lstm_1 = Config_LSTM_1()
-    model_1 = LSTM_Model_1(config_lstm_1)
+    
+    # Create submodel for each space (link) and train and evel independently
+    submodels = [];
+    for space in range(y_train_norm.shape[1]):
+        config = LstmConfig("lstm_model_" + str(space))
+        submodels.append(LstmModel(config));    
 
     logger.info("Running training epochs ...")
-    model_1.train(X_train_norm, y_train_norm)
+    for space in range(y_train_norm.shape[1]):
+        submodels[space].train(X_train_norm[:,space,:], y_train_norm[:,space])
 
-    logger.info("Running test evaluation ...")
-    preds_norm = model_1.predict(X_test_norm)
-    preds = scaler.inverse_transform(preds_norm)
-
-    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test.iloc[20:, 0], preds[:, 0]))
-
+    for space in range(y_train_norm.shape[1]):
+        preds_norm = submodels[space].predict(X_test_norm[:,space,:])
+        preds = scaler.inverse_transform(preds_norm)
+        logger.info("Results: %s (MAPE) = (%f)", ts.columns[space], mean_absolute_percentage_error(y_test, preds))
 
 
 if __name__ == "__main__": main()
-
