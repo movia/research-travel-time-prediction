@@ -55,7 +55,7 @@ class Config_LSTM_1:
         self.learning_rate = 0.0003
         self.state_size = 128
         self.num_layers = 2
-        self.num_epochs = 15
+        self.num_epochs = 5
         self.dropout_train = 0.25
         self.dropout_eval = 1
 
@@ -224,7 +224,7 @@ def main():
     preds_norm = model_1.predict(X_test_norm)
     preds = scaler.inverse_transform(preds_norm)
 
-    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test[:, 0], preds[:, 0]))
+    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test.iloc[20:, 0], preds[:, 0]))
 
 
 
