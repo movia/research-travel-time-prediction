@@ -11,6 +11,8 @@ import sklearn.preprocessing as pp
 
 import functools
 
+import common
+
 # initialize and configure logging
 logger = logging.getLogger('tf_multiple')
 logger.setLevel(logging.DEBUG)
@@ -118,8 +120,8 @@ class LSTM_Model_1:
         batch generator
         """
         for i in range(len(X) // self.config.batch_size):
-            batch_X = X[i:i+self.config.batch_size, location, :].reshape(self.config.batch_size, self.config.seq_len, 1)
-            batch_y = y[i:i+self.config.batch_size, location].reshape(self.config.batch_size, 1, 1)
+            batch_X = X[i:i+self.config.batch_size, location, :].reshape(-1, self.config.seq_len, 1)
+            batch_y = y[i:i+self.config.batch_size, location].reshape(-1, 1, 1)
             yield batch_X, batch_y
 
     def train(self, X, y):
@@ -141,8 +143,8 @@ class LSTM_Model_1:
                 })
 
             train_error = sess.run(self.cost, feed_dict={
-                    self.input_placeholder: X[:, 0, :],
-                    self.target_placeholder: y[:, 0],
+                    self.input_placeholder: X[:, 0, :].reshape(-1, self.config.seq_len, 1),
+                    self.target_placeholder: y[:, 0].reshape(-1, 1, 1),
                     self.dropout_placeholder: self.config.dropout_eval
             })
 
@@ -156,7 +158,7 @@ class LSTM_Model_1:
         sess.run(tf.global_variables_initializer())
 
         return sess.run(self.model, feed_dict={
-                self.input_placeholder: X[:, 0, :],
+                self.input_placeholder: X[:, 0, :].reshape(-1, self.config.seq_len, 1),
                 #self.target_placeholder: y[:, 0],
                 self.dropout_placeholder: self.config.dropout_eval
         })
@@ -187,7 +189,7 @@ def main():
     train = ts[0:i]
     test = ts[i:i + n_test]
        
-    scaler = pp.RobustScaler(with_centering = True, quantile_range = (5, 95))
+    scaler = pp.StandardScaler()
     train_norm = scaler.fit_transform(train)
     test_norm = scaler.transform(test)
 
@@ -214,7 +216,10 @@ def main():
 
     logger.info("Running test evaluation ...")
     preds_norm = model_1.predict(X_test_norm)
-    preds = scaler.inverse_transform(preds)
+    preds = scaler.inverse_transform(preds_norm)
+
+    logger.info("Results: (MAPE) = (%f)", mean_absolute_percentage_error(test[:, 0], preds))
+
     
 
 
