@@ -4,10 +4,9 @@ library(rgdal)
 
 setwd('c:/development/travel-time-prediction')
 
-route_links <- readOGR(dsn = "data/4A_RouteLinks.geojson", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
-
-stop_points <- readOGR(dsn = "C:/Development/vehicletracker/mapmatcher/logs/expected_points_20160205L0004J0201.json", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
-expected_route <- readOGR(dsn = "C:/Development/vehicletracker/mapmatcher/logs/expected_route_4a_matched.json", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
+route_links <- readOGR(dsn = "data/routelinks-4a.geojson", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
+stop_points <- readOGR(dsn = "data/expected-points-20160205L0004J0201.geojson", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
+expected_route <- readOGR(dsn = "data/expected-route-4a-matched.geojson", layer = "OGRGeoJSON", use_iconv = TRUE, encoding = "UTF-8")
 
 brewer.pal(9, 'Set1')
 

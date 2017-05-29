@@ -145,7 +145,8 @@ $RECYCLE.BIN/
 *.synctex.gz
 
 *.Rhistory
-data/
+data/*.sql
+data/*.csv
 paper/
 models/
 plots/
