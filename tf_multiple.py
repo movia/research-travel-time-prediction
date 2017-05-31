@@ -239,14 +239,17 @@ def main():
         for space in range(X_test_norm.shape[1]):
             preds_norm.append(submodels[space].predict(X_test_norm[:,space,:]))
 
-    preds_norm = np.stack(preds_norm, axis = 1).reshape(-1, X_test_norm.shape[1])
-
-    logger.info(y_test.iloc[:, 0].shape)
-    logger.info(preds_norm.shape)
-
+    preds_norm = np.stack(preds_norm, axis = 1).reshape(-1, X_test_norm.shape[1])    
     preds = scaler.inverse_transform(preds_norm)
    
     for space in range(y_test_norm.shape[1]):
-        logger.info("Results: %s (MAPE) = (%f)", ts.columns[space], mean_absolute_percentage_error(y_test.iloc[:, space], preds[:, space]))
+        logger.info("Results: %s (MAPE) = (%f)", test.columns[space], mean_absolute_percentage_error(y_test.iloc[:, space], preds[:, space]))
 
-if __name__ == "__main__": main()
+    results = pd.DataFrame(data=preds, index = test.index[20:], columns = test.columns)
+    results.to_csv('data/results_lstm_independent.csv', index = True, encoding = 'utf-8')
+
+if __name__ == "__main__": 
+    try:
+        main()
+    except Exception as e:
+        logging.exception("message")
