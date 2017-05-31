@@ -56,7 +56,7 @@ class LstmConfig:
         self.learning_rate = 0.0003
         self.state_size = 128
         self.num_layers = 2
-        self.num_epochs = 5
+        self.num_epochs = 1
         self.dropout_train = 0.25
         self.dropout_eval = 1
 
