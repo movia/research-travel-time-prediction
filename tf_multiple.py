@@ -62,10 +62,20 @@ class LstmConfig:
 
 class LstmModel:
 
-    def __init__(self, config):
+    def __init__(self, config, sess):
 
         self.config = config
         self.add_placeholders()
+
+        last_output = self.add_LSTM_layer()
+        last_output = last_output[:, last_output.shape[1] - 1, :]
+        last_output = self.add_dense_layer(last_output, self.config.state_size, 1)
+        self.model = last_output
+        self.optimize  
+
+        # Add ops to save and restore all the variables.
+        self.saver = tf.train.Saver()
+        self.sess = sess
 
     def add_placeholders(self):
 
@@ -118,16 +128,13 @@ class LstmModel:
             batch_y = y[i:i+self.config.batch_size].reshape(-1, 1, 1)
             yield batch_X, batch_y
 
-    def train(self, X, y):
-
-        last_output = self.add_LSTM_layer()
-        last_output = last_output[:, last_output.shape[1] - 1, :]
-        last_output = self.add_dense_layer(last_output, self.config.state_size, 1)
-        self.model = last_output
-        self.optimize
+    def load(self):
+        self.saver.restore(self.sess, "models/" + self.config.name + ".ckpt")
+        logger.info("%s: Model loaded." % self.config.name)
         
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+    def train(self, X, y):
+                     
+        self.sess.run(tf.global_variables_initializer())
 
         for epoch in range(self.config.num_epochs):
             # mini batch generator for training
@@ -136,40 +143,35 @@ class LstmModel:
             for batch in range(len(X) // self.config.batch_size):
                 #logger.debug("Optimizing (epoch, batch) = ({0}, {1})".format(epoch, batch));
                 batch_X, batch_y = next(gen_train);
-                _ = sess.run(self.optimize, feed_dict={
+                _ = self.sess.run(self.optimize, feed_dict={
                         self.input_placeholder: batch_X,
                         self.target_placeholder: batch_y,
                         self.dropout_placeholder: self.config.dropout_train
                 })
 
-            train_error = sess.run(self.cost, feed_dict={
+            train_error = self.sess.run(self.cost, feed_dict={
                     self.input_placeholder: X.reshape(-1, self.config.seq_len, 1),
                     self.target_placeholder: y.reshape(-1, 1, 1),
                     self.dropout_placeholder: self.config.dropout_eval
             })
 
-            logger.info(self.config.name + ": epoch: %d, train error: %f", epoch, train_error)
+            logger.info("%s: epoch: %d, train error: %f", self.config.name, epoch, train_error)
+
+        # Save the variables to disk.
+        save_path = self.saver.save(sess, "models/" + self.config.name + ".ckpt")
+        logger.info("%s: Model saved in file: %s", self.config.name, save_path)
 
     def predict(self, X):
 
         if self.model is None:
             raise RuntimeError("Model is not initialized.")
-
-        sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
-        
-        preds = sess.run(self.model, feed_dict={
+       
+        preds = self.sess.run(self.model, feed_dict={
                 self.input_placeholder: X.reshape(-1, self.config.seq_len, 1),
-                #self.target_placeholder: y[:, 0],
                 self.dropout_placeholder: self.config.dropout_eval
         })
 
         return preds
-
-
-        
-
-
 
 def main():    
     logger.info("Using TensorFlow " + tf.VERSION)
@@ -214,21 +216,37 @@ def main():
 
     logger.info("Initializing model graph ...")
     tf.reset_default_graph()
-    
-    # Create submodel for each space (link) and train and evel independently
-    submodels = [];
-    for space in range(y_train_norm.shape[1]):
-        config = LstmConfig("lstm_model_" + str(space))
-        submodels.append(LstmModel(config));    
 
-    logger.info("Running training epochs ...")
-    for space in range(y_train_norm.shape[1]):
-        submodels[space].train(X_train_norm[:,space,:], y_train_norm[:,space])
+    submodels = []
+    preds_norm = []
 
-    for space in range(y_train_norm.shape[1]):
-        preds_norm = submodels[space].predict(X_test_norm[:,space,:])
-        preds = scaler.inverse_transform(preds_norm)
-        logger.info("Results: %s (MAPE) = (%f)", ts.columns[space], mean_absolute_percentage_error(y_test, preds))
+    with tf.Session() as sess:
 
+        # Create submodel for each space (link) and train and evel independently
+        for space in range(y_train_norm.shape[1]):
+            config = LstmConfig("lstm_model_" + str(space))
+            submodels.append(LstmModel(config, sess));
+
+        if True:
+            logger.info("Loading models ...")
+            for space in range(X_train_norm.shape[1]):
+                submodels[space].load()
+        else:
+            logger.info("Running training epochs ...")
+            for space in range(X_train_norm.shape[1]):
+                submodels[space].train(X_train_norm[:,space,:], y_train_norm[:,space])
+
+        for space in range(X_test_norm.shape[1]):
+            preds_norm.append(submodels[space].predict(X_test_norm[:,space,:]))
+
+    preds_norm = np.stack(preds_norm, axis = 1).reshape(-1, X_test_norm.shape[1])
+
+    logger.info(y_test.iloc[:, 0].shape)
+    logger.info(preds_norm.shape)
+
+    preds = scaler.inverse_transform(preds_norm)
+   
+    for space in range(y_test_norm.shape[1]):
+        logger.info("Results: %s (MAPE) = (%f)", ts.columns[space], mean_absolute_percentage_error(y_test.iloc[:, space], preds[:, space]))
 
 if __name__ == "__main__": main()
