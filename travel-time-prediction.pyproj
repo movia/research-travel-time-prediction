@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9976e671-d42c-47cc-954c-af9b64cd766b}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>tf_multiple.py</StartupFile>
+    <StartupFile>lstm_independent.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,6 +21,7 @@
   <ItemGroup>
     <Compile Include="lr_single.py" />
     <Compile Include="lr_multiple.py" />
+    <Compile Include="lstm_connected.py" />
     <Compile Include="nn_multiple.py" />
     <Compile Include="nn_single.py">
       <SubType>Code</SubType>
@@ -32,11 +33,13 @@
     <Compile Include="random_forest.py" />
     <Compile Include="decision_tree.py" />
     <Compile Include="gaussian_process.py" />
-    <Compile Include="src.py" />
     <Compile Include="svr_single.py" />
     <Compile Include="svr_multiple.py" />
     <Compile Include="svm_gridsearch.py" />
-    <Compile Include="tf_multiple.py">
+    <Compile Include="lstm_common.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="lstm_independent.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
