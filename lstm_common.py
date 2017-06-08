@@ -231,6 +231,7 @@ class LstmModel:
             yield batch_X, batch_y
 
     def load(self):
+        self.model
         saver = tf.train.Saver()
         saver.restore(self.sess, "models/" + self.config.name + ".ckpt")
         self.logger.info("%s: Model loaded." % self.config.name)
