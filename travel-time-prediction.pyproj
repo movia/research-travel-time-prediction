@@ -32,6 +32,7 @@
     <Compile Include="random_forest.py" />
     <Compile Include="decision_tree.py" />
     <Compile Include="gaussian_process.py" />
+    <Compile Include="src.py" />
     <Compile Include="svr_single.py" />
     <Compile Include="svr_multiple.py" />
     <Compile Include="svm_gridsearch.py" />
