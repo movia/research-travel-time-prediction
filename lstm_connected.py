@@ -13,11 +13,6 @@ import sklearn.preprocessing as pp
 from common import *
 from lstm_common import *
 
-# prevent tensorflow from allocating the entire GPU memory at once
-#config = tf.ConfigProto()
-#config.gpu_options.allow_growth = True
-#sess = tf.Session(config=config)
-
 def main():   
     # parse arguments
     parser = argparse.ArgumentParser(description='Train LSTM neural network.')
@@ -29,7 +24,7 @@ def main():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 
-    fileHandler = logging.FileHandler("logs/lstm_independent.log")
+    fileHandler = logging.FileHandler("logs/lstm_connected.log")
     fileHandler.setFormatter(logFormatter)
     logger.addHandler(fileHandler)
 
@@ -92,38 +87,37 @@ def main():
 
         # Create submodel for each space (link) and train and evel independently
         for space in range(y_train_norm.shape[1]):
-            config = IndependentLstmConfig("lstm_independent_" + str(space))
+            config = LstmConfig("lstm_connected_" + str(space))
             submodels.append(LstmModel(config, sess));
+
+        connected_config = ConnectedLstmConfig("lstm_connected")
+        connected_model = ConnectedLstmModel(connected_config, sess, submodels)
 
         if args.train:
             logger.info("Running training epochs ...")
-            for space in range(X_train_norm.shape[1]):
-                submodels[space].train(X_train_norm[:,space,:], y_train_norm[:,space])
+            connected_model.train(X_train_norm, y_train_norm)
         else:
             logger.info("Loading models ...")
-            for space in range(X_train_norm.shape[1]):
-                submodels[space].load()
+            connected_model.load()
 
-        for space in range(X_test_norm.shape[1]):
-            preds_norm.append(submodels[space].predict(X_test_norm[:,space,:]))
-
-    preds_norm = np.stack(preds_norm, axis = 1).reshape(-1, X_test_norm.shape[1])    
+        preds_norm = connected_model.predict(X_test_norm)
+    
     preds = scaler.inverse_transform(preds_norm)
-   
+    
     for space in range(y_test_norm.shape[1]):
         logger.info("Results: %s (MAPE / MAE / RMSE) = (%.1f %%, %.1f, %.1f)", 
                     test.columns[space], 
                     mean_absolute_percentage_error(y_test[:, space], preds[:, space]) * 100,
                     mean_absolute_error(y_test[:, space], preds[:, space]),
                     root_mean_square_error(y_test[:, space], preds[:, space]))
-
+    
     logger.info("Results TOTAL: (MAPE / MAE / RMSE) = (%.1f %%, %.1f, %.1f)", 
                 mean_absolute_percentage_error(y_test.sum(axis = 1), preds.sum(axis = 1)) * 100,
                 mean_absolute_error(y_test.sum(axis = 1), preds.sum(axis = 1)),
                 root_mean_square_error(y_test.sum(axis = 1), preds.sum(axis = 1)))
-
+    
     results = pd.DataFrame(data=preds, index = test.index[20:], columns = test.columns)
-    results.to_csv('data/results_lstm_independent.csv', index = True, encoding = 'utf-8')
+    results.to_csv('data/results_lstm_connected.csv', index = True, encoding = 'utf-8')
 
 if __name__ == "__main__": 
     try:
