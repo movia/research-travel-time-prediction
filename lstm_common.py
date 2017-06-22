@@ -32,7 +32,7 @@ class IndependentLstmConfig(LstmConfig):
     def __init__(self, name):
         super().__init__(name)
         self.batch_size = 256
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
         self.num_epochs = 10
         self.dropout_train = 0.25
         self.dropout_eval = 1
@@ -42,8 +42,8 @@ class ConnectedLstmConfig(LstmConfig):
     def __init__(self, name):
         super().__init__(name)
         self.batch_size = 256
-        self.learning_rate = 0.01
-        self.num_epochs = 12
+        self.learning_rate = 0.001
+        self.num_epochs = 9
         self.dropout_train = 0.25
         self.dropout_eval = 1
 

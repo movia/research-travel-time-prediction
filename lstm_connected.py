@@ -58,18 +58,18 @@ def main():
     test = ts[i:i + n_test]
     test.iloc[20:, :].to_csv('data/test_lstm.csv', index = True, encoding = 'utf-8')
        
-    scaler = pp.StandardScaler()
+    scaler = pp.RobustScaler(with_centering = False, quantile_range = (5, 95))
     train_norm = scaler.fit_transform(train)
     test_norm = scaler.transform(test)
     pd.DataFrame(test_norm[20:, :], index = test.index[20:], columns = test.columns).to_csv('data/test_lstm_scaled.csv', index = True, encoding = 'utf-8')
 
     # Create lags travel time
-    X_train_norm = np.stack([np.roll(train_norm, i) for i in range(20, 0, -1)], axis = -1)
+    X_train_norm = np.stack([np.roll(train_norm, i, axis = 0) for i in range(20, 0, -1)], axis = -1)
     X_train_norm = X_train_norm[20:, ...]
     y_train_norm = train_norm[20:, ...]
 
     # Create lags travel time
-    X_test_norm = np.stack([np.roll(test_norm, i) for i in range(20, 0, -1)], axis = -1)
+    X_test_norm = np.stack([np.roll(test_norm, i, axis = 0) for i in range(20, 0, -1)], axis = -1)
     X_test_norm = X_test_norm[20:, ...]
     y_test_norm = test_norm[20:, ...]
     y_test = test.iloc[20:, :].as_matrix()
