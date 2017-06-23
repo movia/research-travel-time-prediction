@@ -89,9 +89,14 @@ def write_results_table(data, outfile, group_columns, key_index = 0, true_colomn
             mae = mean_absolute_error(group[true_colomn_name], group[predicted_column_name])
             rmse = root_mean_square_error(group[true_colomn_name], group[predicted_column_name])
             file.write(("    %s & %0.1f\\%% & %0.1f & %0.1f \\\\ \\hline \n" % (key[key_index], (mape * 100), mae, rmse)))
-        mape = mean_absolute_percentage_error(data[true_colomn_name], data[predicted_column_name])
-        mae = mean_absolute_error(data[true_colomn_name], data[predicted_column_name])
-        rmse = root_mean_square_error(data[true_colomn_name], data[predicted_column_name])
+        
+        journey_aggr = data \
+            .groupby('JourneyRef') \
+            .filter(lambda x: x['JourneyRef'].count() == 7) \
+            .groupby('JourneyRef')[[true_colomn_name, predicted_column_name]].sum()
+        mape = mean_absolute_percentage_error(journey_aggr[true_colomn_name], journey_aggr[predicted_column_name])
+        mae = mean_absolute_error(journey_aggr[true_colomn_name], journey_aggr[predicted_column_name])
+        rmse = root_mean_square_error(journey_aggr[true_colomn_name], journey_aggr[predicted_column_name])
         file.write("    \\hline \n")
         file.write(("    Overall & %0.1f\\%% & %0.1f & %0.1f \\\\ \\hline \n" % ((mape * 100), mae, rmse)))
         file.write("\end{tabular}\n")

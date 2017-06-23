@@ -63,7 +63,7 @@ def main():
     test = ts[i:i + n_test]
     test.iloc[20:, :].to_csv('data/test_lstm.csv', index = True, encoding = 'utf-8')
        
-    scaler = pp.RobustScaler(with_centering = False, quantile_range = (5, 95))
+    scaler = pp.RobustScaler(with_centering = True, quantile_range = (5, 95))
     train_norm = scaler.fit_transform(train)
     test_norm = scaler.transform(test)
     pd.DataFrame(test_norm[20:, :], index = test.index[20:], columns = test.columns).to_csv('data/test_lstm_scaled.csv', index = True, encoding = 'utf-8')
