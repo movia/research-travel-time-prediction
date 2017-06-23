@@ -6,14 +6,20 @@ from common import load_csv, write_results_table
 
 # Configuration
 group_columns = []
-categorial_columns = ['LinkRef', 'DayType', 'TimeOfDayClass']
+categorial_columns = ['LinkRef']
 meta_columns = ['JourneyLinkRef', 'JourneyRef', 'DateTime', 'LineDirectionLinkOrder', 'LinkName']
 
 results = pd.DataFrame()
 
 # Load and pre-process data
-print('Loading data ...')
-for group, X, Y, meta in load_csv('data/4A_201701_Consistent.csv', group_columns = group_columns, categorial_columns = categorial_columns, meta_columns = meta_columns):
+data = load_csv('data/4A_201701_Consistent.csv', 
+                group_columns = group_columns, 
+                categorial_columns = categorial_columns,
+                meta_columns = meta_columns,
+                n_lags = 20,
+                n_headways = 0)
+
+for group, X, Y, meta in data:
 
     # Split data into train and test    
     X_train, X_test = np.split(X, [int(.8*len(X))])
